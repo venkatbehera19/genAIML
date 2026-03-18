@@ -1,9 +1,29 @@
 import time
-from app.core.logger import logger
+from app.config.log_config import logger
 from starlette.middleware.base import BaseHTTPMiddleware
 
 class LoggingMiddleware(BaseHTTPMiddleware):
+  """Middleware for intercepting and logging HTTP request/response cycles.
+
+  This class captures the HTTP method, URL path, client IP address, 
+  and the total processing time (latency) for every incoming request.
+  """
+
   async def dispatch(self, request, call_next):
+    """Processes the request, tracks execution time, and logs the result.
+
+    Args:
+      request: The incoming Starlette/FastAPI Request object.
+      call_next: A function that passes the request to the next 
+          middleware or the final route handler.
+
+      Returns:
+        Response: The resulting HTTP response from the application.
+
+      Raises:
+        Exception: Re-raises any exceptions caught during the request 
+          lifecycle after logging the failure.
+    """
     start_time = time.time()
     method = request.method
     url = request.url.path

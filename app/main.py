@@ -1,7 +1,7 @@
 from fastapi import FastAPI
-from app.api.user_routes import router
-from app.core.logger import logger
-from app.core.middleware import LoggingMiddleware
+from app.routes.user_routes import router
+from app.config.log_config import logger
+from app.middleware.middleware import LoggingMiddleware
 
 app = FastAPI(title="Async User API")
 
