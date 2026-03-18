@@ -3,3 +3,4 @@ python-docx
 fastapi[standard]
 uvicorn
 httpx
+gunicorn

@@ -1,5 +1,6 @@
 import logging
 import os
+from logging.handlers import TimedRotatingFileHandler
 
 LOG_DIR = "logs"
 LOG_FILE = "app.log"
@@ -24,6 +25,16 @@ if not logger.handlers:
   console_handler.setFormatter(formatter)
 
   file_handler = logging.FileHandler(LOG_PATH)
+  file_handler.setFormatter(formatter)
+
+  file_handler = TimedRotatingFileHandler(
+    LOG_PATH, 
+    when="midnight", 
+    interval=1, 
+    backupCount=30,
+    encoding="utf-8"
+  )
+  file_handler.suffix = "%Y-%m-%d" 
   file_handler.setFormatter(formatter)
 
   logger.addHandler(console_handler)
