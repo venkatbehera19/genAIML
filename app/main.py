@@ -1,5 +1,6 @@
 from fastapi import FastAPI
-from app.routes.user_routes import router
+from app.routes.user_routes import router as user_router
+from app.routes.tax_routes import router as tax_router
 from app.config.log_config import logger
 from app.middleware.middleware import LoggingMiddleware
 from app.exceptions import AppError
@@ -19,4 +20,5 @@ def health():
   logger.info("🚀 Application started")
   return { "status": 'ok' }
 
-app.include_router(router)
+app.include_router(user_router)
+app.include_router(tax_router)
