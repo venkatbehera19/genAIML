@@ -4,3 +4,5 @@ fastapi[standard]
 uvicorn
 httpx
 gunicorn
+sqlalchemy
+alembic

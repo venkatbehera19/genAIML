@@ -1,18 +1,21 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, ConfigDict
 from typing import Optional
 
-class User(BaseModel):
-  id: int
+class BaseUser(BaseModel):
+  """Base attributes shared across create and update schemas."""
   name: str
-  age: int
   email: EmailStr
 
-class CreateUser(BaseModel):
-  email: EmailStr
-  age: int
-  name: str
+class CreateUser(BaseUser):
+  """Schema for creating the user"""
+  pass
 
-class Updateuser(BaseModel):
+class Updateuser(BaseUser):
+  """Schema for updating a user; all fields are optional."""
   name: Optional[str] = None
   email: Optional[EmailStr] = None
-  age: Optional[int] = None
+
+class User(BaseUser):
+  """Schema for returning a user, including the database ID."""
+  id: int
+  model_config = ConfigDict(from_attributes=True)

@@ -1,23 +1,41 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, HTTPException
 
-from app.schemas.user_schema import User, Updateuser, CreateUser
-from app.services.user_service import UserService
-from app.dependencies.user import get_user_services
+from app.schemas.user_schema import Updateuser, CreateUser, User as UserBase
 from app.config.log_config import logger
+from app.db.database import get_db
+from sqlalchemy.orm import Session
+from sqlalchemy.exc import SQLAlchemyError
+from app.models.user import User
 
 router = APIRouter(prefix="/user", tags=["user"])
 
-@router.get('/', response_model=list[User])
-async def list_users(service: UserService = Depends(get_user_services)):
+@router.get('/', response_model=list[UserBase], status_code= status.HTTP_200_OK)
+async def list_users(db: Session= Depends(get_db)):
   """Retrive a list of all users
 
   Returns:
-    list[User]: a list containing of all user records.
+    list[UserBase]: a list containing of all user records.
   """
-  return await service.list_user()
+  try:
+    users =  db.query(User).all()
+    return users
+  
+  except SQLAlchemyError as e:
+    logger.error("Database error during user fetch: ", str(e))
+    raise HTTPException(
+      status_code= status.HTTP_500_INTERNAL_SERVER_ERROR,
+      detail="A database error occurred while creating users."
+    )
+  except Exception as e:
+    db.rollback()
+    logger.error("Unexpected error in list_users:", str(e))
+    raise HTTPException(
+      status_code= status.HTTP_500_INTERNAL_SERVER_ERROR,
+      detail="An unexpected internal server error occurred."
+    )
 
-@router.post('/', response_model=User, status_code= status.HTTP_201_CREATED)
-async def create_user(user: CreateUser ,service: UserService = Depends(get_user_services)):
+@router.post('/', status_code= status.HTTP_201_CREATED)
+async def create_user(user: CreateUser ,db: Session= Depends(get_db)):
   """Create a new user
 
   Args:
@@ -27,10 +45,36 @@ async def create_user(user: CreateUser ,service: UserService = Depends(get_user_
   Returns:
     User: The newly created user object including its generated ID.
   """
-  return await service.create_user(user)
+  try:
+    new_user = User(
+      name = user.name,
+      email = user.email
+    )
 
-@router.get('/{user_id}', response_model=User)
-async def get_user(user_id: int, service: UserService = Depends(get_user_services)):
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+
+    return new_user
+  
+  except SQLAlchemyError as e:
+    db.rollback()
+    logger.error("Database error during user fetch: ", str(e))
+    raise HTTPException(
+      status_code= status.HTTP_500_INTERNAL_SERVER_ERROR,
+      detail="A database error occurred while retrieving users."
+    )
+  except Exception as e:
+    db.rollback()
+    logger.error("Unexpected error in list_users:", str(e))
+    raise HTTPException(
+      status_code= status.HTTP_500_INTERNAL_SERVER_ERROR,
+      detail="An unexpected internal server error occurred."
+    )
+  # return await service.create_user(user)
+
+@router.get('/{user_id}')
+async def get_user(user_id: int, db: Session= Depends(get_db)):
   """Get a specific user by their ID.
 
   Args: 
@@ -39,10 +83,26 @@ async def get_user(user_id: int, service: UserService = Depends(get_user_service
   Returns:
     User: The requested user object.
   """
-  return await service.get_user(user_id)
+  try:
+    user = db.get(User, user_id)
+    return user
+  except SQLAlchemyError as e:
+    db.rollback()
+    logger.error("Database error during user fetch: ", str(e))
+    raise HTTPException(
+      status_code= status.HTTP_500_INTERNAL_SERVER_ERROR,
+      detail="A database error occurred while retrieving users."
+    )
+  except Exception as e:
+    db.rollback()
+    logger.error("Unexpected error in list_users:", str(e))
+    raise HTTPException(
+      status_code= status.HTTP_500_INTERNAL_SERVER_ERROR,
+      detail="An unexpected internal server error occurred."
+    )
 
 @router.delete('/{user_id}', response_model=bool)
-async def delete_user(user_id: int, service: UserService = Depends(get_user_services)):
+async def delete_user(user_id: int, db: Session= Depends(get_db)):
   """Delete a specific user by their ID.
 
   Args:
@@ -51,10 +111,35 @@ async def delete_user(user_id: int, service: UserService = Depends(get_user_serv
   Returns:
     bool: True if the deletion was successful. otherwise false
   """
-  return await service.delete_user(user_id)
+  user_to_delete = db.query(User).filter(User.id == user_id).first()
+  if not user_to_delete:
+    raise HTTPException(
+      status_code= status.HTTP_404_NOT_FOUND,
+      detail=f"User with id {user_id} does not exist"
+    )
+  
+  try:
+    db.delete(user_to_delete)
+    db.commit()
+    return True
 
-@router.put('/{user_id}', response_model=User)
-async def update_user(user_id: int, user_data: Updateuser, service: UserService = Depends(get_user_services)):
+  except SQLAlchemyError as e:
+    db.rollback()
+    logger.error("Database error during deleting user ", str(e))
+    raise HTTPException(
+      status_code= status.HTTP_500_INTERNAL_SERVER_ERROR,
+      detail="A database error occurred while retrieving users."
+    )
+  except Exception as e:
+    db.rollback()
+    logger.error("Error deleting user:", str(e))
+    raise HTTPException(
+      status_code= status.HTTP_500_INTERNAL_SERVER_ERROR,
+      detail="An unexpected internal server error occurred."
+    )
+
+@router.put('/{user_id}')
+async def update_user(user_id: int, user_data: Updateuser, db: Session= Depends(get_db)):
   """Update an existing user's information.
 
   Args:
@@ -64,4 +149,38 @@ async def update_user(user_id: int, user_data: Updateuser, service: UserService 
   Returns:
     User: the updated user object if the ID was found, otherwise none.
   """
-  return await service.update_user(user_id, user_data)
+  db_user = db.query(User).filter(User.id == user_id).first()
+
+  if not db_user:
+    raise HTTPException(
+      status_code= status.HTTP_404_NOT_FOUND,
+      detail=f"User with id {user_id} does not exist"
+    )
+  
+  try:
+    updated_data = user_data.model_dump(exclude_unset=True)
+    logger.info("--->updated_data---> %s", updated_data)
+
+    for key, value in updated_data.items():
+      if hasattr(db_user, key): 
+        setattr(db_user, key, value)
+
+    db.commit()
+    db.refresh(db_user)
+
+    return db_user
+
+  except SQLAlchemyError as e:
+    db.rollback()
+    logger.error("Database error during deleting user ", str(e))
+    raise HTTPException(
+      status_code= status.HTTP_500_INTERNAL_SERVER_ERROR,
+      detail="A database error occurred while retrieving users."
+    )
+  except Exception as e:
+    db.rollback()
+    logger.error("Error deleting user:", str(e))
+    raise HTTPException(
+      status_code= status.HTTP_500_INTERNAL_SERVER_ERROR,
+      detail="An unexpected internal server error occurred."
+    )
