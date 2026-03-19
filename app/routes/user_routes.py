@@ -7,6 +7,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from app.models.user import User
 
+from app.exceptions import NotFoundError, InternalServerError
+
 router = APIRouter(prefix="/user", tags=["user"])
 
 @router.get('/', response_model=list[UserBase], status_code= status.HTTP_200_OK)
@@ -22,17 +24,12 @@ async def list_users(db: Session= Depends(get_db)):
   
   except SQLAlchemyError as e:
     logger.error("Database error during user fetch: ", str(e))
-    raise HTTPException(
-      status_code= status.HTTP_500_INTERNAL_SERVER_ERROR,
-      detail="A database error occurred while creating users."
-    )
+    raise InternalServerError("A database error occurred while creating users.") from e
+  
   except Exception as e:
     db.rollback()
     logger.error("Unexpected error in list_users:", str(e))
-    raise HTTPException(
-      status_code= status.HTTP_500_INTERNAL_SERVER_ERROR,
-      detail="An unexpected internal server error occurred."
-    )
+    raise InternalServerError("A database error occurred while creating users.") from e
 
 @router.post('/', status_code= status.HTTP_201_CREATED)
 async def create_user(user: CreateUser ,db: Session= Depends(get_db)):
@@ -60,18 +57,12 @@ async def create_user(user: CreateUser ,db: Session= Depends(get_db)):
   except SQLAlchemyError as e:
     db.rollback()
     logger.error("Database error during user fetch: ", str(e))
-    raise HTTPException(
-      status_code= status.HTTP_500_INTERNAL_SERVER_ERROR,
-      detail="A database error occurred while retrieving users."
-    )
+    raise InternalServerError("A database error occurred while retrieving users.") from e
+  
   except Exception as e:
     db.rollback()
     logger.error("Unexpected error in list_users:", str(e))
-    raise HTTPException(
-      status_code= status.HTTP_500_INTERNAL_SERVER_ERROR,
-      detail="An unexpected internal server error occurred."
-    )
-  # return await service.create_user(user)
+    raise InternalServerError("An unexpected internal server error occurred.") from e
 
 @router.get('/{user_id}')
 async def get_user(user_id: int, db: Session= Depends(get_db)):
@@ -89,17 +80,13 @@ async def get_user(user_id: int, db: Session= Depends(get_db)):
   except SQLAlchemyError as e:
     db.rollback()
     logger.error("Database error during user fetch: ", str(e))
-    raise HTTPException(
-      status_code= status.HTTP_500_INTERNAL_SERVER_ERROR,
-      detail="A database error occurred while retrieving users."
-    )
+    raise InternalServerError("A database error occurred while retrieving users.") from e
+  
   except Exception as e:
     db.rollback()
     logger.error("Unexpected error in list_users:", str(e))
-    raise HTTPException(
-      status_code= status.HTTP_500_INTERNAL_SERVER_ERROR,
-      detail="An unexpected internal server error occurred."
-    )
+    raise InternalServerError("An unexpected internal server error occurred.") from e
+  
 
 @router.delete('/{user_id}', response_model=bool)
 async def delete_user(user_id: int, db: Session= Depends(get_db)):
@@ -113,10 +100,7 @@ async def delete_user(user_id: int, db: Session= Depends(get_db)):
   """
   user_to_delete = db.query(User).filter(User.id == user_id).first()
   if not user_to_delete:
-    raise HTTPException(
-      status_code= status.HTTP_404_NOT_FOUND,
-      detail=f"User with id {user_id} does not exist"
-    )
+    raise NotFoundError(f"User with id {user_id} does not exist")
   
   try:
     db.delete(user_to_delete)
@@ -126,17 +110,13 @@ async def delete_user(user_id: int, db: Session= Depends(get_db)):
   except SQLAlchemyError as e:
     db.rollback()
     logger.error("Database error during deleting user ", str(e))
-    raise HTTPException(
-      status_code= status.HTTP_500_INTERNAL_SERVER_ERROR,
-      detail="A database error occurred while retrieving users."
-    )
+    raise InternalServerError("A database error occurred while retrieving users.") from e
+  
   except Exception as e:
     db.rollback()
     logger.error("Error deleting user:", str(e))
-    raise HTTPException(
-      status_code= status.HTTP_500_INTERNAL_SERVER_ERROR,
-      detail="An unexpected internal server error occurred."
-    )
+    raise InternalServerError("A database error occurred while retrieving users.") from e
+  
 
 @router.put('/{user_id}')
 async def update_user(user_id: int, user_data: Updateuser, db: Session= Depends(get_db)):
@@ -152,14 +132,10 @@ async def update_user(user_id: int, user_data: Updateuser, db: Session= Depends(
   db_user = db.query(User).filter(User.id == user_id).first()
 
   if not db_user:
-    raise HTTPException(
-      status_code= status.HTTP_404_NOT_FOUND,
-      detail=f"User with id {user_id} does not exist"
-    )
+    raise NotFoundError(f"User with id {user_id} does not exist")
   
   try:
     updated_data = user_data.model_dump(exclude_unset=True)
-    logger.info("--->updated_data---> %s", updated_data)
 
     for key, value in updated_data.items():
       if hasattr(db_user, key): 
@@ -173,14 +149,9 @@ async def update_user(user_id: int, user_data: Updateuser, db: Session= Depends(
   except SQLAlchemyError as e:
     db.rollback()
     logger.error("Database error during deleting user ", str(e))
-    raise HTTPException(
-      status_code= status.HTTP_500_INTERNAL_SERVER_ERROR,
-      detail="A database error occurred while retrieving users."
-    )
+    raise InternalServerError("A database error occurred while deleting users.") from e
+  
   except Exception as e:
     db.rollback()
     logger.error("Error deleting user:", str(e))
-    raise HTTPException(
-      status_code= status.HTTP_500_INTERNAL_SERVER_ERROR,
-      detail="An unexpected internal server error occurred."
-    )
+    raise InternalServerError("A database error occurred while deleting users.") from e

@@ -4,20 +4,15 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import SQLAlchemyError
 import os
 from app.config.log_config import logger
+from app.config.env_config import settings
 
-# SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./app/data/sql_app.db")
-# logger.info(f"Connecting to Database: {SQLALCHEMY_DATABASE_URL}")
-
-DB_FILE_PATH = "/app/data/sql_app.db"
-SQLALCHEMY_DATABASE_URL = f"sqlite:////{DB_FILE_PATH}"
-
-db_dir = os.path.dirname(DB_FILE_PATH)
+db_dir = os.path.dirname(settings.DB_FILE_PATH)
 if not os.path.exists(db_dir):
     os.makedirs(db_dir, exist_ok=True)
     logger.info(f"Created directory: {db_dir}")
 
 engine = create_engine(
-  "sqlite:////./app/data/sql_app.db",
+  settings.SQLALCHEMY_DATABASE_URL,
   connect_args={"check_same_thread": False}
 )
 

@@ -6,3 +6,4 @@ httpx
 gunicorn
 sqlalchemy
 alembic
+python-dotenv
