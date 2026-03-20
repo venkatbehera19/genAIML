@@ -12,3 +12,5 @@ Thumbs.db
 logs/
 
 *.ipynb
+
+.pytest_cache/

@@ -1,4 +1,6 @@
 from app.schemas.tax import TaxRequest, TaxRegime
+from app.constants.app_constants import Tax
+from app.config.log_config import logger
 
 class TaxService:
   """
@@ -32,13 +34,18 @@ class TaxService:
     slabs = self._get_slabs()
 
     #handling the standard deductions
-    std_deduction = 70000 if self.req.regime == TaxRegime.NEW else 50000
+    std_deduction  = Tax.NEW_REGIME_STANDARD_DEDUCTION.value if self.req.regime == TaxRegime.NEW else Tax.OLD_REGIME_STANDARD_DEDUCTION.value
     taxable_income = max(0, income - std_deduction)
 
-    tax_amount = self._calculate(slabs, taxable_income)
+    if taxable_income < 1200000 and self.req.regime == TaxRegime.NEW:
+      tax_amount = 0.0
+    else:
+      tax_amount = self._calculate(slabs, taxable_income)
 
     return {
       "total_income": income,
+      "taxable_income": taxable_income,
+      "std_deduction": std_deduction,
       "tax": tax_amount,
       "regime": self.req.regime
     }
@@ -69,7 +76,7 @@ class TaxService:
       return [
         (400000, 0),
         (800000, 5),
-        (1200000, 12),
+        (1200000, 10),
         (1600000, 15),
         (2000000, 20),
         (2400000, 25),

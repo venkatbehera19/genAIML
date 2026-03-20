@@ -15,3 +15,5 @@ class TaxResponse(BaseModel):
   total_income: float
   tax: float
   regime: str
+  taxable_income: float
+  std_deduction: float

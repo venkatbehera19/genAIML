@@ -19,6 +19,6 @@ async def calculate_tax(req_data: TaxRequest):
     res = tax.calculate_tax()
     return res
   except Exception as e:
-    logger.error("Unexpected error in list_users:", str(e))
+    logger.error("Unexpected error in Tax:")
     raise InternalServerError("An internal error occurred while calculating tax. Please try again.") from e
   

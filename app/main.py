@@ -11,6 +11,11 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Async User API")
 
+@app.on_event("startup")
+def print_routes():
+  for route in app.routes:
+    logger.info(f"URL: {route.path} | Name: {route.name}")
+
 app.add_exception_handler(AppError, app_error_handler)
 app.add_exception_handler(Exception, global_exception_handler)
 app.add_middleware(LoggingMiddleware)
