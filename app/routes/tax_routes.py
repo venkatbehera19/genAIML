@@ -7,7 +7,7 @@ from app.exceptions.domain import InternalServerError
 
 router = APIRouter(prefix='/tax', tags=["tax"])
 
-@router.post('/', status_code=status.HTTP_200_OK, response_model=TaxResponse)
+@router.post('/income', status_code=status.HTTP_200_OK, response_model=TaxResponse)
 async def calculate_tax(req_data: TaxRequest):
   """
   Calculates the annual income tax based on the provided salary components 
