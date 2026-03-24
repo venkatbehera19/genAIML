@@ -7,3 +7,19 @@ class Tax(Enum):
   OLD_REGIME_STANDARD_DEDUCTION = 50000.00
 
 
+class GEMINI_CHAT_MODEL(Enum):
+  """Gemini chat model configuration"""
+  MODEL_NAME = "gemini-3-flash-preview"
+  TEMPERATURE = 0.0
+
+class ALLOWED_FILES(Enum):
+  """Supported file extensions for ingestion."""
+  PDF = ".pdf"
+  DOCX = ".docx"
+  ALL_FILES = (".pdf", ".docx")
+
+class VECTOR_DB(Enum):
+  """"""
+  CHUNK_SIZE = 1000
+  CHUNK_OVERLAP = 100
+  EMBEDDING_MODEL = "BAAI/bge-small-en-v1.5"

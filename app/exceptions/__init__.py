@@ -1,9 +1,10 @@
 from app.exceptions.domain import (
   AppError,
   NotFoundError,
-  InternalServerError
+  InternalServerError,
+  ValidationError
 )
 
 __all__ = [
-  "AppError", "NotFoundError", "InternalServerError"
+  "AppError", "NotFoundError", "InternalServerError", "ValidationError"
 ]

@@ -37,16 +37,18 @@ class TaxService:
     std_deduction  = Tax.NEW_REGIME_STANDARD_DEDUCTION.value if self.req.regime == TaxRegime.NEW else Tax.OLD_REGIME_STANDARD_DEDUCTION.value
     taxable_income = max(0, income - std_deduction)
 
+    breakdown = []
     if taxable_income < 1200000 and self.req.regime == TaxRegime.NEW:
       tax_amount = 0.0
     else:
-      tax_amount = self._calculate(slabs, taxable_income)
+      tax_amount, breakdown = self._calculate(slabs, taxable_income)
 
     return {
       "total_income": income,
       "taxable_income": taxable_income,
       "std_deduction": std_deduction,
       "tax": tax_amount,
+      "breakdown": breakdown,
       "regime": self.req.regime
     }
 
@@ -95,11 +97,19 @@ class TaxService:
     """
     tax = 0
     prev = 0
+    breakdown = []
     for limit, rate in slabs:
       taxable = min(income, limit) - prev
       if taxable <= 0:
         break
-
-      tax += taxable * (rate/100)
+      slab_tax = taxable * (rate / 100)
+      breakdown.append({
+        "from": prev,
+        "to": limit if limit != float('inf') else "above",
+        "rate": rate,
+        "taxable": taxable,
+        "tax": slab_tax
+      })
+      tax += slab_tax
       prev = limit
-    return tax
+    return tax, breakdown

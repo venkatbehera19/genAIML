@@ -37,3 +37,8 @@ class InternalServerError(AppError):
   """Unexpected internal error (e.g. DB, I/O)."""
   status_code: int = 500
   code: str = "internal_error"
+
+class ValidationError(AppError):
+  """Domain or request validation failed."""
+  status_code: int = 422
+  code: str = "validation_error"

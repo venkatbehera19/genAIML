@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from app.routes.user_routes import router as user_router
 from app.routes.tax_routes import router as tax_router
+# from app.routes.ingestion_routes import router as ingestion_router
 from app.config.log_config import logger
 from app.middleware.middleware import LoggingMiddleware
 from app.exceptions import AppError
@@ -27,3 +28,4 @@ def health():
 
 app.include_router(user_router)
 app.include_router(tax_router)
+# app.include_router(ingestion_router)

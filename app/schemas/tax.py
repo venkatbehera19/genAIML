@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from enum import Enum
+from typing import List
 
 class TaxRegime(str, Enum):
   OLD = "old"
@@ -17,3 +18,4 @@ class TaxResponse(BaseModel):
   regime: str
   taxable_income: float
   std_deduction: float
+  breakdown: List

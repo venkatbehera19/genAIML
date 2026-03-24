@@ -1,7 +1,10 @@
 import os
 from dotenv import load_dotenv
+from pathlib import Path
 
 load_dotenv()
+
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 class Settings:
   """Load and expose environment settings for the application."""
@@ -14,5 +17,11 @@ class Settings:
 
     self.DB_FILE_PATH: str = os.getenv("DB_FILE_PATH")
     self.SQLALCHEMY_DATABASE_URL: str = os.getenv("SQLALCHEMY_DATABASE_URL")
+
+    self.GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY")
+
+    working_dir = os.path.abspath(os.getenv("WORKING_DIR", ".").strip() or ".")
+    self.WORKING_PROJECT_DIR: str = os.path.join(working_dir,self.PROJECT_NAME)
+    self.UPLOAD_DIR: str = str(BASE_DIR / "static" / "upload")
 
 settings = Settings()

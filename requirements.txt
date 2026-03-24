@@ -141,3 +141,10 @@ yarg==0.1.9
 pytest==9.0.2
 pytest-asyncio
 httpx
+langchain_google_genai
+python-multipart
+langchain_community
+pymupdf
+langchain-huggingface
+sentence_transformers
+faiss-cpu
